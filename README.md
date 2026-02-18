@@ -23,13 +23,27 @@ Data is fetched from **USGS Earthquake Feed / Catalog** (GeoJSON).
   - depth range
 - Playback speed controls (x1 / x4 / x16)
 
+## Current Status
+
+- 3D globe scene implemented
+- Transparent Earth mesh
+- Coastline rendered from Natural Earth GeoJSON
+- Glowing contour lines (custom shader material)
+- Orbit controls (rotate / zoom)
+
 ## Data Sources
 - USGS Earthquake Feeds (GeoJSON): https://earthquake.usgs.gov/earthquakes/feed/
 - USGS Earthquake Catalog (FDSN Event API): https://earthquake.usgs.gov/fdsnws/event/1/
+- Natural Earth – 110m Coastline (Physical Vectors):  
+  https://www.naturalearthdata.com/downloads/110m-physical-vectors/110m-coastline/
 
 ## Getting Started
 
 ### 1) Install
-`
-npm i
-`
+```bash
+npm install
+```
+
+### 2) Run
+```bash
+npm run dev
