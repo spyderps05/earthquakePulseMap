@@ -1,4 +1,14 @@
-/* === Base Reset === */
+/*  Base Reset  */
+
+@font-face {
+  font-family: "Geologica";
+  src: url("/geologica/Geologica-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 *,
 *::before,
 *::after {
@@ -15,7 +25,7 @@ figure,
 ul,
 ol {
   margin: 0;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 ul[role="list"],
@@ -56,14 +66,28 @@ html {
   color: white;
   font-size: 18px;
 }
+
 #root {
   display: flex;
   flex-direction: column;
   font-family: "Geologica", sans-serif;
+  font-weight: 500;
 }
 
+body {
+  font-family: "Geologica", sans-serif;
+  font-weight: 500;
+}
+* {
+  font-family: "Geologica", sans-serif;
+  font-weight: 500;
+}
+
+
+
+
 // .app-layout__main > * {
-//   background: rgba(0,255,0,0.2); /* подсветка детей */
+//   background: rgba(0,255,0,0.2);
 // }
 
 *,

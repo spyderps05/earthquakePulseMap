@@ -38,10 +38,14 @@ Data is sourced from the **USGS Earthquake Catalog (GeoJSON)** and preprocessed 
   - Nonlinear lifeWindow scaling for consistent visual density
   - Stable animation independent of globe rotation
 - Show All mode:
-  - Static full dataset rendering
-  - Timeline filtering disabled
-  - Play / Speed controls automatically disabled
-  - Enhanced brightness for analytical overview
+  - Static rendering of the full dataset
+  - Timeline controls disabled automatically
+  - Increased visual intensity for density clarity
+- Informational side panels:
+  - Dataset summary
+  - Depth color scale
+  - Magnitude → point size reference
+
 
 ---
 
@@ -61,17 +65,18 @@ Binary format reduces runtime parsing overhead and improves rendering performanc
 
 ## Planned Features
 
-- Pulse wave (shockwave ring) on click
 - Tooltip / side panel:
   - place
   - magnitude
   - depth
   - time
   - USGS link
-- Filters:
+- Pulse interaction (event highlight)
+- Dataset filters:
   - date range
   - minimum magnitude
   - depth range
+- Performance optimizations for high-density rendering
 
 ---
 

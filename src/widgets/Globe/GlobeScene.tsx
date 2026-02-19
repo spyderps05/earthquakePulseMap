@@ -1,6 +1,6 @@
 import { Canvas } from "@react-three/fiber";
 import { useState } from "react";
-
+import InfoPanels from "../InfoPanels/InfoPanels";
 import GlobeContent from "./GlobeContent";
 import styles from "./GlobeScene.module.scss";
 import GlobeControls from "./ui/GlobeControls";
@@ -21,6 +21,8 @@ export default function GlobeScene() {
 					isAllMode={isAllMode}
 				/>
 			</Canvas>
+
+			<InfoPanels />
 
 			<GlobeControls
 				isRotating={isRotating}

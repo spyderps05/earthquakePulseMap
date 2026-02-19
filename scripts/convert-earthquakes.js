@@ -10,7 +10,12 @@ const inputPath = path.join(
 	"../public/data/earthquakes-1900-2026.json",
 );
 
-const outputPath = path.join(__dirname, "../public/data/earthquakes.bin");
+const outputBinPath = path.join(__dirname, "../public/data/earthquakes.bin");
+
+const outputStatsPath = path.join(
+	__dirname,
+	"../public/data/earthquakes-stats.json",
+);
 
 const RADIUS = 1.02;
 
@@ -47,6 +52,12 @@ const count = validFeatures.length;
 const buffer = new ArrayBuffer(count * 6 * 4);
 const floatView = new Float32Array(buffer);
 
+let minMag = Infinity;
+let maxMag = -Infinity;
+
+let minDepth = Infinity;
+let maxDepth = -Infinity;
+
 let offset = 0;
 
 for (const feature of validFeatures) {
@@ -69,9 +80,32 @@ for (const feature of validFeatures) {
 	floatView[offset++] = mag;
 	floatView[offset++] = depth;
 	floatView[offset++] = normalizedTime;
+
+	if (mag < minMag) minMag = mag;
+	if (mag > maxMag) maxMag = mag;
+
+	if (depth >= 0) {
+		if (depth < minDepth) minDepth = depth;
+		if (depth > maxDepth) maxDepth = depth;
+	}
 }
 
-fs.writeFileSync(outputPath, Buffer.from(buffer));
+fs.writeFileSync(outputBinPath, Buffer.from(buffer));
 
-console.log("Binary file created:", outputPath);
+console.log("Binary file created:", outputBinPath);
 console.log("Points count:", count);
+
+const stats = {
+	totalCount: count,
+	minMagnitude: Number(minMag.toFixed(2)),
+	maxMagnitude: Number(maxMag.toFixed(2)),
+	minDepth: Number(minDepth.toFixed(2)),
+	maxDepth: Number(maxDepth.toFixed(2)),
+	startYear: 1900,
+	endYear: 2026,
+};
+
+fs.writeFileSync(outputStatsPath, JSON.stringify(stats, null, 2));
+
+console.log("Stats file created:", outputStatsPath);
+console.log("Stats:", stats);
