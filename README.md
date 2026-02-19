@@ -22,8 +22,7 @@ Data is sourced from the **USGS Earthquake Catalog (GeoJSON)** and preprocessed 
 
 - 3D globe with rotation & zoom
 - Transparent Earth mesh
-- Coastlines rendered from Natural Earth dataset
-- Coastline converted from GeoJSON → binary format
+- Coastlines rendered from Natural Earth dataset (binary format)
 - Unified base radius across globe elements
 - Binary data pipeline for earthquakes
 - Earthquakes rendered as GPU points:
@@ -32,7 +31,11 @@ Data is sourced from the **USGS Earthquake Catalog (GeoJSON)** and preprocessed 
   - Unknown depth handled explicitly (-1)
   - Color gradient by depth
   - Additive glow shader
-
+- Chronological timeline playback:
+  - GPU-driven time uniform
+  - Play / Pause controls
+  - Stable animation independent of globe rotation
+  
 ---
 
 ## Data Pipeline
@@ -51,7 +54,7 @@ Binary format reduces runtime parsing overhead and improves rendering performanc
 
 ## Planned Features
 
-- Timeline playback (chronological animation)
+- Adjustable playback speed (x0.25 / x0.5 / x1 / x4)
 - Pulse wave (shockwave ring) on click
 - Tooltip / side panel:
   - place
@@ -63,7 +66,6 @@ Binary format reduces runtime parsing overhead and improves rendering performanc
   - date range
   - minimum magnitude
   - depth range
-- Playback speed controls (x1 / x4 / x16)
 
 ---
 

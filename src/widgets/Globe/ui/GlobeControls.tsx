@@ -1,28 +1,33 @@
-import rotationOff from "@/shared/assets/icons/rotation-off.svg";
-import rotationOn from "@/shared/assets/icons/rotation-on.svg";
+import RotationButton from "./RotationButton";
+import PlayPauseButton from "./PlayPauseButton";
 
 import styles from "./styles.module.scss";
 
 interface Props {
-	isRotating: boolean;
-	onToggle: () => void;
+  isRotating: boolean;
+  onToggleRotation: () => void;
+
+  isPlaying: boolean;
+  onTogglePlay: () => void;
 }
 
-export default function GlobeControls({ isRotating, onToggle }: Props) {
-	return (
-		<div className={styles.controls}>
-			<button
-				type="button"
-				className={`${styles.button} ${
-					isRotating ? styles.active : styles.inactive
-				}`}
-				onClick={onToggle}
-			>
-				<img
-					src={isRotating ? rotationOn : rotationOff}
-					alt="rotation toggle"
-				/>
-			</button>
-		</div>
-	);
+export default function GlobeControls({
+  isRotating,
+  onToggleRotation,
+  isPlaying,
+  onTogglePlay,
+}: Props) {
+  return (
+    <div className={styles.controls}>
+      <RotationButton
+        isRotating={isRotating}
+        onToggle={onToggleRotation}
+      />
+
+      <PlayPauseButton
+        isPlaying={isPlaying}
+        onToggle={onTogglePlay}
+      />
+    </div>
+  );
 }

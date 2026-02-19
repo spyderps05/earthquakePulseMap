@@ -1,142 +1,179 @@
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-export default function EarthquakesPoints() {
-	const [data, setData] = useState<Float32Array | null>(null);
-	const materialRef = useRef<THREE.ShaderMaterial>(null);
+interface Props {
+  isPlaying: boolean;
+  timeSpeed: number; 
+}
 
-	useEffect(() => {
-		fetch("/data/earthquakes.bin")
-			.then((res) => res.arrayBuffer())
-			.then((buffer) => {
-				setData(new Float32Array(buffer));
-			});
-	}, []);
+export default function EarthquakesPoints({ isPlaying, timeSpeed }: Props) {
+  const [data, setData] = useState<Float32Array | null>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
 
-	const geometry = useMemo(() => {
-		if (!data) return null;
+  const currentTimeRef = useRef(0);
+  const isPlayingRef = useRef(isPlaying);
+  const timeSpeedRef = useRef(timeSpeed);
+  const uniforms = useMemo(
+    () => ({
+      uMaxDepth: { value: 700.0 },
+      uCurrentTime: { value: 0.0 },
+    }),
+    [],
+  );
 
-		const stride = 6;
-		const count = data.length / stride;
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
-		const positions = new Float32Array(count * 3);
-		const magnitudes = new Float32Array(count);
-		const depths = new Float32Array(count);
+  useEffect(() => {
+    timeSpeedRef.current = timeSpeed;
+  }, [timeSpeed]);
 
-		const baseRadius = 1.02;
-		const maxDepthKm = 700;
+  useEffect(() => {
+    fetch("/data/earthquakes.bin")
+      .then((res) => res.arrayBuffer())
+      .then((buffer) => {
+        setData(new Float32Array(buffer));
+      });
+  }, []);
 
-		for (let i = 0; i < count; i++) {
-			const x = data[i * stride];
-			const y = data[i * stride + 1];
-			const z = data[i * stride + 2];
-			const mag = data[i * stride + 3];
-			const depth = data[i * stride + 4];
+  useFrame((_, delta) => {
+    if (!materialRef.current) return;
 
-			const v = new THREE.Vector3(x, y, z).normalize();
+    if (isPlayingRef.current) {
+      currentTimeRef.current += delta * timeSpeedRef.current * 0.1;
+      if (currentTimeRef.current > 1) currentTimeRef.current = 0;
+    }
 
-			let depthNorm = 0;
+    uniforms.uCurrentTime.value = currentTimeRef.current;
+  });
 
-			if (depth >= 0) {
-				depthNorm = Math.min(depth / maxDepthKm, 1.0);
-				depthNorm = depthNorm ** 0.6;
-			}
+  const geometry = useMemo(() => {
+    if (!data) return null;
 
-			const finalRadius =
-				depth >= 0 ? baseRadius - depthNorm * 0.35 : baseRadius; // неизвестные строго на поверхности
+    const stride = 6;
+    const count = data.length / stride;
 
-			const finalPos = v.multiplyScalar(finalRadius);
+    const positions = new Float32Array(count * 3);
+    const magnitudes = new Float32Array(count);
+    const depths = new Float32Array(count);
+    const times = new Float32Array(count);
 
-			positions[i * 3] = finalPos.x;
-			positions[i * 3 + 1] = finalPos.y;
-			positions[i * 3 + 2] = finalPos.z;
+    const baseRadius = 1.02;
+    const maxDepthKm = 700;
 
-			magnitudes[i] = mag;
-			depths[i] = depth;
-		}
+    const v = new THREE.Vector3(); // меньше мусора для GC
 
-		const geometry = new THREE.BufferGeometry();
+    for (let i = 0; i < count; i++) {
+      const x = data[i * stride];
+      const y = data[i * stride + 1];
+      const z = data[i * stride + 2];
+      const mag = data[i * stride + 3];
+      const depth = data[i * stride + 4];
+      const normalizedTime = data[i * stride + 5];
 
-		geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      v.set(x, y, z).normalize();
 
-		geometry.setAttribute(
-			"aMagnitude",
-			new THREE.BufferAttribute(magnitudes, 1),
-		);
+      let depthNorm = 0;
+      if (depth >= 0) {
+        depthNorm = Math.min(depth / maxDepthKm, 1.0);
+        depthNorm = depthNorm ** 0.6;
+      }
 
-		geometry.setAttribute("aDepth", new THREE.BufferAttribute(depths, 1));
+      const finalRadius = depth >= 0 ? baseRadius - depthNorm * 0.35 : baseRadius;
+      const finalPos = v.multiplyScalar(finalRadius);
 
-		return geometry;
-	}, [data]);
+      positions[i * 3] = finalPos.x;
+      positions[i * 3 + 1] = finalPos.y;
+      positions[i * 3 + 2] = finalPos.z;
 
-	if (!geometry) return null;
+      magnitudes[i] = mag;
+      depths[i] = depth;
+      times[i] = normalizedTime;
+    }
 
-	return (
-		<points geometry={geometry}>
-			<shaderMaterial
-				ref={materialRef}
-				transparent
-				depthWrite={false}
-				blending={THREE.AdditiveBlending}
-				uniforms={{
-					uMaxDepth: { value: 700.0 },
-				}}
-				vertexShader={`
-        attribute float aMagnitude;
-        attribute float aDepth;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    g.setAttribute("aMagnitude", new THREE.BufferAttribute(magnitudes, 1));
+    g.setAttribute("aDepth", new THREE.BufferAttribute(depths, 1));
+    g.setAttribute("aTime", new THREE.BufferAttribute(times, 1));
 
-        varying float vDepth;
+    return g;
+  }, [data]);
 
-        void main() {
-          vDepth = aDepth;
+  if (!geometry) return null;
 
-          float magNorm = clamp((aMagnitude - 6.0) / 3.0, 0.0, 1.0);
-          float size = mix(4.0, 18.0, magNorm);
+  return (
+    <points geometry={geometry}>
+      <shaderMaterial
+        ref={materialRef}
+        transparent
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        uniforms={uniforms}
+        vertexShader={`
+          attribute float aMagnitude;
+          attribute float aDepth;
+          attribute float aTime;
 
-          gl_PointSize = size;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `}
-				fragmentShader={`
-        uniform float uMaxDepth;
-        varying float vDepth;
+          varying float vDepth;
+          varying float vTime;
 
-        void main() {
+          void main() {
+            vDepth = aDepth;
+            vTime = aTime;
 
-          float dist = length(gl_PointCoord - vec2(0.5));
-          if (dist > 0.5) discard;
+            float magNorm = clamp((aMagnitude - 6.0) / 3.0, 0.0, 1.0);
+            float size = mix(4.0, 18.0, magNorm);
 
-          vec3 color;
-
-          // неизвестная глубина
-          if (vDepth < 0.0) {
-            color = vec3(0.5, 0.5, 0.5);
-          } else {
-
-            float depthNorm = clamp(vDepth / uMaxDepth, 0.0, 1.0);
-
-            depthNorm = pow(depthNorm, 0.6);
-
-            // жёлтый → красный
-            vec3 shallow = vec3(1.0, 0.9, 0.0);
-            vec3 deep = vec3(1.0, 0.0, 0.0);
-
-            color = mix(shallow, deep, depthNorm);
+            gl_PointSize = size;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
+        `}
+        fragmentShader={`
+          uniform float uMaxDepth;
+          uniform float uCurrentTime;
+
+          varying float vDepth;
+          varying float vTime;
+
+          void main() {
+            float dist = length(gl_PointCoord - vec2(0.5));
+            if (dist > 0.5) discard;
+
+            // --- ВРЕМЯ ---
+            float diff = uCurrentTime - vTime;
+            if (diff < 0.0) discard;
+
+            float lifeWindow = 0.08;
+            float life = 1.0 - clamp(diff / lifeWindow, 0.0, 1.0);
+            if (life <= 0.0) discard;
+
+            // --- ЦВЕТ ---
+            vec3 color;
+            if (vDepth < 0.0) {
+              color = vec3(0.5, 0.5, 0.5);
+            } else {
+              float depthNorm = clamp(vDepth / uMaxDepth, 0.0, 1.0);
+              depthNorm = pow(depthNorm, 0.6);
+
+              vec3 shallow = vec3(1.0, 0.9, 0.0);
+              vec3 deep = vec3(1.0, 0.0, 0.0);
+
+              color = mix(shallow, deep, depthNorm);
+            }
 
             float glow = 1.0 - smoothstep(0.3, 0.5, dist);
-
             float core = 1.0 - smoothstep(0.0, 0.15, dist);
 
             vec3 finalColor = color + color * core * 0.8;
-
-            float alpha = glow * 0.7 + core * 0.9;
+            float alpha = (glow * 0.7 + core * 0.9) * life;
 
             gl_FragColor = vec4(finalColor, alpha);
-
-        }
-      `}
-			/>
-		</points>
-	);
+          }
+        `}
+      />
+    </points>
+  );
 }

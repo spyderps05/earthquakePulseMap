@@ -6,18 +6,24 @@ import styles from "./GlobeScene.module.scss";
 import GlobeControls from "./ui/GlobeControls";
 
 export default function GlobeScene() {
-	const [isRotating, setIsRotating] = useState(true);
+  const [isRotating, setIsRotating] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
 
-	return (
-		<div className={styles.canvasWrapper}>
-			<Canvas camera={{ position: [0, 0, 4], fov: 30 }}>
-				<GlobeContent isRotating={isRotating} />
-			</Canvas>
+  return (
+    <div className={styles.canvasWrapper}>
+      <Canvas
+        frameloop="always"
+        camera={{ position: [0, 0, 4], fov: 30 }}
+      >
+        <GlobeContent isRotating={isRotating} isPlaying={isPlaying} timeSpeed={1} />
+      </Canvas>
 
-			<GlobeControls
-				isRotating={isRotating}
-				onToggle={() => setIsRotating((prev) => !prev)}
-			/>
-		</div>
-	);
+      <GlobeControls
+        isRotating={isRotating}
+        onToggleRotation={() => setIsRotating((prev) => !prev)}
+        isPlaying={isPlaying}
+        onTogglePlay={() => setIsPlaying((prev) => !prev)}
+      />
+    </div>
+  );
 }
