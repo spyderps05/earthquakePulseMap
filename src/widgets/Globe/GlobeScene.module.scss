@@ -10,3 +10,30 @@
     radial-gradient(1000px 900px at 50% 85%, rgba(255, 120, 190, 0.07), transparent 65%),
     linear-gradient(180deg, #05060d 0%, #070a1c 45%, #03030a 100%);
 }
+
+.profileBtn {
+  position: absolute;
+  top: 50%;
+  right: 30px;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+
+    background: rgba(15, 3, 17, 0.65);
+
+  border: 1px solid rgba(180, 148, 248, 0.25);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profileBtn:hover {
+  border-color: #b494f8;
+  box-shadow: 0 0 15px rgba(180, 148, 248, 0.45);
+}

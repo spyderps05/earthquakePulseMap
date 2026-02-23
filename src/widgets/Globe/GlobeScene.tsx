@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import { useState } from "react";
 import InfoPanels from "../InfoPanels/InfoPanels";
+import ProfileCard from "../ProfileCard/ProfileCard";
 import GlobeContent from "./GlobeContent";
 import styles from "./GlobeScene.module.scss";
 import GlobeControls from "./ui/GlobeControls";
@@ -10,6 +11,7 @@ export default function GlobeScene() {
 	const [isPlaying, setIsPlaying] = useState(true);
 	const [timeSpeed, setTimeSpeed] = useState(1);
 	const [isAllMode, setIsAllMode] = useState(false);
+	const [isProfileOpen, setIsProfileOpen] = useState(false);
 
 	return (
 		<div className={styles.canvasWrapper}>
@@ -21,7 +23,18 @@ export default function GlobeScene() {
 					isAllMode={isAllMode}
 				/>
 			</Canvas>
+			<button
+				type="button"
+				className={styles.profileBtn}
+				onClick={() => setIsProfileOpen(true)}
+			>
+				<img src="/src/shared/assets/icons/profile.svg" alt="Profile" />
+			</button>
 
+			<ProfileCard
+				isOpen={isProfileOpen}
+				onClose={() => setIsProfileOpen(false)}
+			/>
 			<InfoPanels />
 
 			<GlobeControls
