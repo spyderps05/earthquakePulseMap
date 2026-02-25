@@ -1,11 +1,8 @@
 import { useMemo } from "react";
 import { useWeekEarthquakesData } from "@/shared/api/earthquakes/useEarthquakesData";
 import { useTime } from "@/shared/context/TimeContext";
+import { pad2 } from "@/shared/utils/format";
 import styles from "./styles.module.scss";
-
-function pad2(n: number) {
-	return String(n).padStart(2, "0");
-}
 
 export default function DateCard() {
 	const { mode, isAllMode, currentDate } = useTime();

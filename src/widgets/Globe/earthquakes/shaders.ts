@@ -5,13 +5,31 @@ export const vertexShader = `
 
           uniform float uMagMin;
           uniform float uMagMax;
+          uniform float uMagFilterMin;
+          uniform float uMagFilterMax;
+          uniform float uDepthFilterMin;
+          uniform float uDepthFilterMax;
 
           varying float vDepth;
           varying float vTime;
+          varying float vMag;
 
           void main() {
+            // Filter: discard points outside filter ranges
+            if (aMagnitude < uMagFilterMin || aMagnitude > uMagFilterMax) {
+              gl_PointSize = 0.0;
+              gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+              return;
+            }
+            if (aDepth >= 0.0 && (aDepth < uDepthFilterMin || aDepth > uDepthFilterMax)) {
+              gl_PointSize = 0.0;
+              gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+              return;
+            }
+
             vDepth = aDepth;
             vTime = aTime;
+            vMag = aMagnitude;
 
             float magNorm = clamp((aMagnitude - uMagMin) / max(0.0001, (uMagMax - uMagMin)), 0.0, 1.0);
 
@@ -29,6 +47,7 @@ export const fragmentShader = `
 
 			varying float vDepth;
 			varying float vTime;
+			varying float vMag;
 
 			void main() {
 				float dist = length(gl_PointCoord - vec2(0.5));
@@ -66,13 +85,24 @@ export const fragmentShader = `
 				float glow = 1.0 - smoothstep(0.3, 0.5, dist);
 				float core = 1.0 - smoothstep(0.0, 0.15, dist);
 
+				// Pulse ring effect for recent earthquakes
+				float pulseRing = 0.0;
+				if (uShowAll < 0.5) {
+					float diff = uCurrentTime - vTime;
+					float pulseWindow = 0.015 / sqrt(max(uTimeSpeed, 0.0001));
+					float pulsePhase = clamp(diff / pulseWindow, 0.0, 1.0);
+
+					float ringDist = abs(dist - pulsePhase * 0.45);
+					pulseRing = (1.0 - pulsePhase) * smoothstep(0.05, 0.0, ringDist) * 0.6;
+				}
+
 				vec3 finalColor = color + color * core * 0.8;
 
 				if (uShowAll > 0.5) {
 					finalColor *= 1.25;
 				}
 
-				float alpha = (glow * 0.7 + core * 0.9) * life;
-				gl_FragColor = vec4(finalColor, alpha);
+				float alpha = (glow * 0.7 + core * 0.9 + pulseRing) * life;
+				gl_FragColor = vec4(finalColor + vec3(pulseRing * 0.3), alpha);
 			}
         `;

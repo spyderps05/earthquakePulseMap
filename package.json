@@ -1,7 +1,7 @@
 {
-	"name": "earthquakepulsemap",
+	"name": "gimu-earthquake-watch",
 	"private": true,
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
@@ -15,7 +15,6 @@
 		"@amcharts/amcharts5": "^5.16.0",
 		"@react-three/drei": "^10.7.7",
 		"@react-three/fiber": "^9.5.0",
-		"@vercel/analytics": "^1.6.1",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
 		"recharts": "^3.7.0",

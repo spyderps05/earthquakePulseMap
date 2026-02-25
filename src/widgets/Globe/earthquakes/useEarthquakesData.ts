@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+	getCachedHistoricRaw,
+	loadHistoricRaw,
+} from "@/shared/api/earthquakes/historic.store";
+import {
 	useWeekEarthquakesData,
 	type WeekEarthquakeEvent,
 } from "@/shared/api/earthquakes/useEarthquakesData";
-import { latLonToUnitVec3 } from "./geo";
+import { latLonToUnitVec3 } from "@/shared/utils/geo";
 import type { DataMode, PointsPayload } from "./types";
 
 function buildWeekPointsPayload(events: WeekEarthquakeEvent[]): PointsPayload {
@@ -56,6 +60,8 @@ export function useEarthquakesData(mode: DataMode) {
 	const [historicPayload, setHistoricPayload] = useState<PointsPayload | null>(
 		null,
 	);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<Error | null>(null);
 
 	const weekPayload = useMemo(() => {
 		if (!weekData) return null;
@@ -65,26 +71,39 @@ export function useEarthquakesData(mode: DataMode) {
 	useEffect(() => {
 		if (mode !== "historic") return;
 
-		const controller = new AbortController();
-		setHistoricPayload(null);
-
-		async function loadHistoric() {
-			const res = await fetch("/data/earthquakes.bin", {
-				signal: controller.signal,
-			});
-			const buffer = await res.arrayBuffer();
-			const data = new Float32Array(buffer);
-
-			setHistoricPayload({ mode: "historic", data, maxDepth: 700 });
+		const cached = getCachedHistoricRaw();
+		if (cached) {
+			setHistoricPayload({ mode: "historic", data: cached, maxDepth: 700 });
+			return;
 		}
 
-		loadHistoric().catch(() => {
-			// ignore
-		});
+		const controller = new AbortController();
+		setHistoricPayload(null);
+		setIsLoading(true);
+		setError(null);
+
+		loadHistoricRaw(controller.signal)
+			.then((data) => {
+				setHistoricPayload({ mode: "historic", data, maxDepth: 700 });
+				setError(null);
+			})
+			.catch((err) => {
+				if (!controller.signal.aborted) {
+					setError(
+						err instanceof Error
+							? err
+							: new Error("Failed to load historic earthquake data"),
+					);
+				}
+			})
+			.finally(() => {
+				setIsLoading(false);
+			});
 
 		return () => controller.abort();
 	}, [mode]);
 
-	if (mode === "week") return weekPayload;
-	return historicPayload;
+	const payload = mode === "week" ? weekPayload : historicPayload;
+
+	return { payload, isLoading, error };
 }

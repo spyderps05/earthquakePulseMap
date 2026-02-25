@@ -1,11 +1,5 @@
 import { useEffect } from "react";
-import profileImg from "@/shared/assets/images/profile.webp";
 import styles from "./styles.module.scss";
-
-interface LinkItem {
-	label: string;
-	href: string;
-}
 
 interface Props {
 	isOpen: boolean;
@@ -29,11 +23,6 @@ export default function ProfileCard({ isOpen, onClose }: Props) {
 
 	if (!isOpen) return null;
 
-	const links: LinkItem[] = [
-		{ label: "GitHub", href: "https://github.com/KhadichaN" },
-		{ label: "LinkedIn", href: "https://www.linkedin.com/in/khadicha-n" },
-	];
-
 	return (
 		<div className={styles.overlay}>
 			<button
@@ -44,29 +33,22 @@ export default function ProfileCard({ isOpen, onClose }: Props) {
 			/>
 			<div className={styles.card}>
 				<div className={styles.imageWrapper}>
-					<img src={profileImg} alt="Profile" />
+					<img src="/branding/splash.png" alt="GIMU-EarthQuake Watch" />
 					<div className={styles.imageOverlay} />
 				</div>
 
 				<div className={styles.content}>
-					<h2>Khadichabegim Naymanova</h2>
+					<h2>GIMU-EarthQuake Watch</h2>
 					<p className={styles.subtitle}>
-						Frontend Developer · React · TypeScript · WebGL · ArcGIS JS SDK
+						Global Seismic Activity Monitor · Powered by USGS
 					</p>
 
-					<div className={styles.links}>
-						{links.map((link) => (
-							<a
-								key={link.label}
-								href={link.href}
-								target="_blank"
-								rel="noopener noreferrer"
-								className={styles.linkBtn}
-							>
-								{link.label}
-							</a>
-						))}
-					</div>
+					<p className={styles.devCredit}>
+						Developed by Khadichabegim Naymanova
+					</p>
+					<p className={styles.devRole}>
+						Frontend Developer · React · TypeScript · WebGL
+					</p>
 				</div>
 			</div>
 		</div>

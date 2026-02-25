@@ -11,8 +11,10 @@ export default function RotationButton() {
 			type="button"
 			className={`${styles.button} ${isRotating ? styles.active : styles.inactive}`}
 			onClick={toggleRotation}
+			aria-label={isRotating ? "Stop rotation" : "Start rotation"}
+			title={isRotating ? "Stop auto-rotation" : "Start auto-rotation"}
 		>
-			<img src={isRotating ? rotationOn : rotationOff} alt="rotation toggle" />
+			<img src={isRotating ? rotationOn : rotationOff} alt="" />
 		</button>
 	);
 }

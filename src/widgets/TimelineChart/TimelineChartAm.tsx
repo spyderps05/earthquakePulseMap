@@ -1,15 +1,19 @@
 import * as am5 from "@amcharts/amcharts5";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+import {
+	getCachedHistoricRaw,
+	loadHistoricRaw,
+} from "@/shared/api/earthquakes/historic.store";
 import { useWeekEarthquakesData } from "@/shared/api/earthquakes/useEarthquakesData";
 import { useTime } from "@/shared/context/TimeContext";
+import { pad2 } from "@/shared/utils/format";
 import { buildMonthlyBins } from "./bins";
 import { buildDailyBinsFromWeekEvents } from "./binsWeek";
 import { createAmRoot } from "./chart/amRoot";
 import { createStrip } from "./chart/createStrip";
 import { END_YEAR, ROW_DEPTH, ROW_GAP, ROW_MAG, START_YEAR } from "./constants";
 import styles from "./styles.module.scss";
-import { pad2 } from "./utils";
 
 export default function TimelineChartAm() {
 	const { mode, currentTimeRef, isAllMode, currentDate } = useTime();
@@ -17,7 +21,9 @@ export default function TimelineChartAm() {
 
 	const hostRef = useRef<HTMLDivElement | null>(null);
 
-	const [raw, setRaw] = useState<Float32Array | null>(null);
+	const [raw, setRaw] = useState<Float32Array | null>(
+		() => getCachedHistoricRaw(),
+	);
 
 	const bins = useMemo(() => {
 		if (mode === "week")
@@ -43,14 +49,19 @@ export default function TimelineChartAm() {
 	useEffect(() => {
 		if (mode !== "historic") return;
 
+		const cached = getCachedHistoricRaw();
+		if (cached) {
+			setRaw(cached);
+			return;
+		}
+
 		const controller = new AbortController();
 		setRaw(null);
 
-		fetch("/data/earthquakes.bin", { signal: controller.signal })
-			.then((r) => r.arrayBuffer())
-			.then((buf) => setRaw(new Float32Array(buf)))
+		loadHistoricRaw(controller.signal)
+			.then((data) => setRaw(data))
 			.catch(() => {
-				// ignore
+				// handled by error boundary
 			});
 
 		return () => controller.abort();
@@ -203,7 +214,7 @@ export default function TimelineChartAm() {
 	const periodLabel = mode === "week" ? "per day" : "per month";
 
 	return (
-		<div className={styles.wrap} aria-hidden="true">
+		<div className={styles.wrap} aria-label="Seismic activity timeline chart" role="img">
 			<div className={styles.aggregationHint}>
 				<span className={styles.metricPill}>M max ({periodLabel})</span>
 				<span className={styles.metricPill}>Depth avg ({periodLabel})</span>
@@ -224,9 +235,8 @@ export default function TimelineChartAm() {
 				</span>
 
 				<div
-					className={`${styles.axisDate} ${
-						mode === "week" || isAllMode ? styles.axisDateHidden : ""
-					}`}
+					className={`${styles.axisDate} ${mode === "week" || isAllMode ? styles.axisDateHidden : ""
+						}`}
 				>
 					{currentLabel}
 				</div>

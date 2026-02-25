@@ -20,6 +20,8 @@ export default function SpeedControls() {
 			disabled={disabled}
 			className={`${styles.button} ${disabled ? styles.disabled : styles.active}`}
 			onClick={disabled ? undefined : () => setTimeSpeed(nextSpeed)}
+			aria-label={`Playback speed: ${timeSpeed}x. Click to change to ${nextSpeed}x`}
+			title={`Speed: ${timeSpeed}x`}
 		>
 			<span className={styles.speedText}>{timeSpeed}x</span>
 		</button>

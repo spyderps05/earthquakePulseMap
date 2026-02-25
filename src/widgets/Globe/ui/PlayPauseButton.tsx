@@ -11,12 +11,13 @@ export default function PlayPauseButton() {
 		<button
 			type="button"
 			disabled={disabled}
-			className={`${styles.button} ${
-				disabled ? styles.disabled : isPlaying ? styles.active : styles.inactive
-			}`}
+			className={`${styles.button} ${disabled ? styles.disabled : isPlaying ? styles.active : styles.inactive
+				}`}
 			onClick={disabled ? undefined : togglePlay}
+			aria-label={isPlaying ? "Pause timeline" : "Play timeline"}
+			title={isPlaying ? "Pause playback" : "Play playback"}
 		>
-			<img src={isPlaying ? pauseIcon : playIcon} alt="time toggle" />
+			<img src={isPlaying ? pauseIcon : playIcon} alt="" />
 		</button>
 	);
 }

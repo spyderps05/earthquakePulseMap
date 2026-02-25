@@ -1,5 +1,5 @@
 import { OrbitControls } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useRef } from "react";
 import type * as THREE from "three";
 
@@ -11,10 +11,12 @@ import EarthquakesPoints from "./earthquakes/EarthquakesPoints";
 export default function GlobeContent() {
 	const { isRotating } = useTime();
 	const globeRef = useRef<THREE.Group>(null);
+	const invalidate = useThree((s) => s.invalidate);
 
 	useFrame(() => {
 		if (isRotating && globeRef.current) {
 			globeRef.current.rotation.y += 0.001;
+			invalidate();
 		}
 	});
 
@@ -34,6 +36,7 @@ export default function GlobeContent() {
 				maxDistance={6}
 				minPolarAngle={0.1}
 				maxPolarAngle={Math.PI - 0.1}
+				onChange={() => invalidate()}
 			/>
 		</>
 	);

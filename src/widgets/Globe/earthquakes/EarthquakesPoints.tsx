@@ -1,4 +1,4 @@
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 
@@ -8,8 +8,9 @@ import { fragmentShader, vertexShader } from "./shaders";
 import { useEarthquakesData } from "./useEarthquakesData";
 
 export default function EarthquakesPoints() {
-	const payload = useEarthquakesData(useTime().mode);
+	const { payload } = useEarthquakesData(useTime().mode);
 	const materialRef = useRef<THREE.ShaderMaterial>(null);
+	const invalidate = useThree((s) => s.invalidate);
 
 	const {
 		mode,
@@ -28,6 +29,10 @@ export default function EarthquakesPoints() {
 			uShowAll: { value: 0 },
 			uMagMin: { value: 6 },
 			uMagMax: { value: 9 },
+			uMagFilterMin: { value: 0 },
+			uMagFilterMax: { value: 10 },
+			uDepthFilterMin: { value: -1 },
+			uDepthFilterMax: { value: 800 },
 		}),
 		[],
 	);
@@ -46,6 +51,8 @@ export default function EarthquakesPoints() {
 		uniforms.uTimeSpeed.value = timeSpeed;
 		uniforms.uShowAll.value = showAll ? 1 : 0;
 		uniforms.uMaxDepth.value = payload.maxDepth;
+
+		invalidate();
 	});
 
 	const geometry = useMemo(() => {
