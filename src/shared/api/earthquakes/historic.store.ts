@@ -34,7 +34,7 @@ export async function loadHistoricRaw(
     if (cachedHistoricData) return cachedHistoricData;
     if (inFlightPromise) return inFlightPromise;
 
-    inFlightPromise = fetch("/data/earthquakes.bin", { signal })
+    inFlightPromise = fetch("/data/earthquakes.data", { signal })
         .then((res) => {
             if (!res.ok) {
                 throw new Error(

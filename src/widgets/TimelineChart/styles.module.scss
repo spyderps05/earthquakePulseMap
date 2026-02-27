@@ -151,6 +151,11 @@
 	will-change: left;
 }
 
+.axisDateHidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
 @media (max-width: 767px) {
 	.aggregationHint {
 		top: 4px;

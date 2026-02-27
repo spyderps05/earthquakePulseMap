@@ -1,15 +1,22 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { forwardRef, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 import { useTime } from "@/shared/context/TimeContext";
 import { buildGeometry } from "./buildGeometry";
 import { fragmentShader, vertexShader } from "./shaders";
 import { useEarthquakesData } from "./useEarthquakesData";
+import type { EarthquakeMetaItem } from "./types";
 
-export default function EarthquakesPoints() {
+export interface EarthquakesHandle {
+	points: THREE.Points | null;
+	meta: EarthquakeMetaItem[];
+}
+
+const EarthquakesPoints = forwardRef<EarthquakesHandle>(function EarthquakesPoints(_props, ref) {
 	const { payload } = useEarthquakesData(useTime().mode);
 	const materialRef = useRef<THREE.ShaderMaterial>(null);
+	const pointsRef = useRef<THREE.Points>(null);
 	const invalidate = useThree((s) => s.invalidate);
 
 	const {
@@ -19,6 +26,8 @@ export default function EarthquakesPoints() {
 		isAllMode,
 		currentTimeRef,
 		setCurrentTime,
+		magRange,
+		depthRange,
 	} = useTime();
 
 	const uniforms = useMemo(
@@ -29,10 +38,10 @@ export default function EarthquakesPoints() {
 			uShowAll: { value: 0 },
 			uMagMin: { value: 6 },
 			uMagMax: { value: 9 },
-			uMagFilterMin: { value: 0 },
-			uMagFilterMax: { value: 10 },
-			uDepthFilterMin: { value: -1 },
-			uDepthFilterMax: { value: 800 },
+			uMagFilterMin: { value: magRange[0] },
+			uMagFilterMax: { value: magRange[1] },
+			uDepthFilterMin: { value: depthRange[0] },
+			uDepthFilterMax: { value: depthRange[1] },
 		}),
 		[],
 	);
@@ -52,6 +61,12 @@ export default function EarthquakesPoints() {
 		uniforms.uShowAll.value = showAll ? 1 : 0;
 		uniforms.uMaxDepth.value = payload.maxDepth;
 
+		// Feed filter values from context into shader uniforms
+		uniforms.uMagFilterMin.value = magRange[0];
+		uniforms.uMagFilterMax.value = magRange[1];
+		uniforms.uDepthFilterMin.value = depthRange[0];
+		uniforms.uDepthFilterMax.value = depthRange[1];
+
 		invalidate();
 	});
 
@@ -60,14 +75,22 @@ export default function EarthquakesPoints() {
 		return buildGeometry(payload.data);
 	}, [payload]);
 
+	// Expose ref for raycasting
+	if (typeof ref === "function") {
+		ref({ points: pointsRef.current, meta: payload?.meta ?? [] });
+	} else if (ref) {
+		ref.current = { points: pointsRef.current, meta: payload?.meta ?? [] };
+	}
+
 	if (!geometry || !payload || payload.mode !== mode) return null;
 
 	return (
-		<points geometry={geometry}>
+		<points ref={pointsRef} geometry={geometry}>
 			<shaderMaterial
 				ref={materialRef}
 				transparent
 				depthWrite={false}
+				depthTest
 				blending={THREE.AdditiveBlending}
 				uniforms={uniforms}
 				vertexShader={vertexShader}
@@ -75,4 +98,6 @@ export default function EarthquakesPoints() {
 			/>
 		</points>
 	);
-}
+});
+
+export default EarthquakesPoints;

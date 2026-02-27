@@ -21,7 +21,7 @@ function toWeekEvent(feature: unknown): WeekEarthquakeEvent | null {
 	const geometry = (feature as { geometry?: { coordinates?: unknown } })
 		.geometry;
 	const properties = (
-		feature as { properties?: { mag?: unknown; time?: unknown } }
+		feature as { properties?: { mag?: unknown; time?: unknown; place?: unknown } }
 	).properties;
 
 	const coords = geometry?.coordinates;
@@ -32,6 +32,7 @@ function toWeekEvent(feature: unknown): WeekEarthquakeEvent | null {
 	const depthRaw = coords[2];
 	const mag = properties?.mag;
 	const time = properties?.time;
+	const place = typeof properties?.place === "string" ? properties.place : "Unknown";
 
 	if (!isFiniteNumber(lat) || !isFiniteNumber(lon)) return null;
 	if (!isFiniteNumber(mag) || mag < 2.5) return null;
@@ -43,6 +44,7 @@ function toWeekEvent(feature: unknown): WeekEarthquakeEvent | null {
 		depth: isFiniteNumber(depthRaw) ? depthRaw : -1,
 		mag,
 		time,
+		place,
 	};
 }
 

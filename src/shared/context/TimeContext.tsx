@@ -32,6 +32,11 @@ type TimeContextValue = {
 
 	mode: DataMode;
 	setMode: (mode: DataMode) => void;
+
+	magRange: [number, number];
+	setMagRange: (v: [number, number]) => void;
+	depthRange: [number, number];
+	setDepthRange: (v: [number, number]) => void;
 };
 
 const TimeContext = createContext<TimeContextValue | null>(null);
@@ -57,6 +62,9 @@ export function TimeProvider({ children }: PropsWithChildren) {
 	const prevModeAllRef = useRef(false);
 
 	const [mode, setModeState] = useState<DataMode>("historic");
+
+	const [magRange, setMagRange] = useState<[number, number]>([6, 10]);
+	const [depthRange, setDepthRange] = useState<[number, number]>([0, 700]);
 
 	const toggleRotation = useCallback(() => {
 		setIsRotating((p) => !p);
@@ -110,6 +118,8 @@ export function TimeProvider({ children }: PropsWithChildren) {
 
 					setIsAllMode(true);
 					setIsPlaying(false);
+					setMagRange([2.5, 10]);
+					setDepthRange([0, 700]);
 
 					return next;
 				}
@@ -117,6 +127,8 @@ export function TimeProvider({ children }: PropsWithChildren) {
 				// switching back to "historic": restore previous flags
 				setIsAllMode(prevModeAllRef.current);
 				setIsPlaying(prevModePlayingRef.current);
+				setMagRange([6, 10]);
+				setDepthRange([0, 700]);
 
 				return next;
 			});
@@ -140,6 +152,10 @@ export function TimeProvider({ children }: PropsWithChildren) {
 			currentDate,
 			setCurrentTime,
 			resetTime,
+			magRange,
+			setMagRange,
+			depthRange,
+			setDepthRange,
 		}),
 		[
 			isRotating,
@@ -155,6 +171,8 @@ export function TimeProvider({ children }: PropsWithChildren) {
 			currentDate,
 			setCurrentTime,
 			resetTime,
+			magRange,
+			depthRange,
 		],
 	);
 

@@ -8,12 +8,63 @@ import {
 	type WeekEarthquakeEvent,
 } from "@/shared/api/earthquakes/useEarthquakesData";
 import { latLonToUnitVec3 } from "@/shared/utils/geo";
-import type { DataMode, PointsPayload } from "./types";
+import type { DataMode, EarthquakeMetaItem, PointsPayload } from "./types";
 
+// ── Historic metadata (place names from JSON) ──────────────
+let cachedHistoricMeta: EarthquakeMetaItem[] | null = null;
+let inFlightMetaPromise: Promise<EarthquakeMetaItem[]> | null = null;
+
+function getCachedHistoricMeta() {
+	return cachedHistoricMeta;
+}
+
+async function loadHistoricMeta(
+	signal?: AbortSignal,
+): Promise<EarthquakeMetaItem[]> {
+	if (cachedHistoricMeta) return cachedHistoricMeta;
+	if (inFlightMetaPromise) return inFlightMetaPromise;
+
+	inFlightMetaPromise = fetch("/data/earthquakes-1900-2026.json", { signal })
+		.then((res) => {
+			if (!res.ok) throw new Error(`Failed to fetch earthquake JSON: ${res.status}`);
+			return res.json();
+		})
+		.then((geo: { features?: Array<{ properties?: Record<string, unknown>; geometry?: { coordinates?: number[] } }> }) => {
+			const features = geo.features ?? [];
+			const meta: EarthquakeMetaItem[] = [];
+
+			for (const f of features) {
+				const coords = f.geometry?.coordinates;
+				if (!coords || coords.length < 2) continue;
+				if (typeof coords[0] !== "number" || typeof coords[1] !== "number") continue;
+				if (typeof f.properties?.time !== "number") continue;
+
+				meta.push({
+					place: typeof f.properties?.place === "string" ? f.properties.place : "Unknown location",
+					lon: coords[0],
+					lat: coords[1],
+					mag: typeof f.properties?.mag === "number" ? f.properties.mag : 6,
+					depth: typeof coords[2] === "number" ? coords[2] : -1,
+					time: f.properties.time as number,
+				});
+			}
+
+			cachedHistoricMeta = meta;
+			return meta;
+		})
+		.finally(() => {
+			inFlightMetaPromise = null;
+		});
+
+	return inFlightMetaPromise;
+}
+
+// ── Week data → PointsPayload builder ───────────────────────
 function buildWeekPointsPayload(events: WeekEarthquakeEvent[]): PointsPayload {
 	const stride = 6;
 	const packed = new Float32Array(events.length * stride);
 	const baseRadius = 1.02;
+	const meta: EarthquakeMetaItem[] = [];
 
 	let observedMaxDepth = 0;
 	for (const event of events) {
@@ -46,15 +97,26 @@ function buildWeekPointsPayload(events: WeekEarthquakeEvent[]): PointsPayload {
 		packed[off + 3] = event.mag;
 		packed[off + 4] = event.depth;
 		packed[off + 5] = 0;
+
+		meta.push({
+			place: event.place,
+			lat: event.lat,
+			lon: event.lon,
+			mag: event.mag,
+			depth: event.depth,
+			time: event.time,
+		});
 	}
 
 	return {
 		mode: "week",
 		data: packed,
 		maxDepth: maxDepthForRadius,
+		meta,
 	};
 }
 
+// ── Hook ────────────────────────────────────────────────────
 export function useEarthquakesData(mode: DataMode) {
 	const { data: weekData } = useWeekEarthquakesData(mode === "week");
 	const [historicPayload, setHistoricPayload] = useState<PointsPayload | null>(
@@ -72,8 +134,9 @@ export function useEarthquakesData(mode: DataMode) {
 		if (mode !== "historic") return;
 
 		const cached = getCachedHistoricRaw();
-		if (cached) {
-			setHistoricPayload({ mode: "historic", data: cached, maxDepth: 700 });
+		const cachedMeta = getCachedHistoricMeta();
+		if (cached && cachedMeta) {
+			setHistoricPayload({ mode: "historic", data: cached, maxDepth: 700, meta: cachedMeta });
 			return;
 		}
 
@@ -82,9 +145,12 @@ export function useEarthquakesData(mode: DataMode) {
 		setIsLoading(true);
 		setError(null);
 
-		loadHistoricRaw(controller.signal)
-			.then((data) => {
-				setHistoricPayload({ mode: "historic", data, maxDepth: 700 });
+		Promise.all([
+			loadHistoricRaw(controller.signal),
+			loadHistoricMeta(controller.signal),
+		])
+			.then(([data, meta]) => {
+				setHistoricPayload({ mode: "historic", data, maxDepth: 700, meta });
 				setError(null);
 			})
 			.catch((err) => {

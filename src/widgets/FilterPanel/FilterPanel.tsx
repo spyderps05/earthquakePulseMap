@@ -3,12 +3,8 @@ import { useTime } from "@/shared/context/TimeContext";
 import styles from "./FilterPanel.module.scss";
 
 export default function FilterPanel() {
-    const { mode } = useTime();
+    const { mode, magRange, setMagRange, depthRange, setDepthRange } = useTime();
     const [isOpen, setIsOpen] = useState(false);
-    const [magRange, setMagRange] = useState<[number, number]>(
-        mode === "week" ? [2.5, 10] : [6, 10],
-    );
-    const [depthRange, setDepthRange] = useState<[number, number]>([0, 700]);
 
     const toggleOpen = useCallback(() => setIsOpen((p) => !p), []);
 

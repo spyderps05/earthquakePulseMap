@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styles from "./styles.module.scss";
 
 interface Props {
@@ -7,6 +7,9 @@ interface Props {
 }
 
 export default function ProfileCard({ isOpen, onClose }: Props) {
+	const [isUpdating, setIsUpdating] = useState(false);
+	const [updateResult, setUpdateResult] = useState<{ added?: number, total?: number, error?: string } | null>(null);
+
 	useEffect(() => {
 		const handleEsc = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
@@ -20,6 +23,29 @@ export default function ProfileCard({ isOpen, onClose }: Props) {
 			document.removeEventListener("keydown", handleEsc);
 		};
 	}, [isOpen, onClose]);
+
+	// Reset result when modal opens
+	useEffect(() => {
+		if (isOpen) setUpdateResult(null);
+	}, [isOpen]);
+
+	const handleUpdate = async () => {
+		setIsUpdating(true);
+		setUpdateResult(null);
+		try {
+			const res = await fetch("/api/update-data", { method: "POST" });
+			const data = await res.json();
+			if (data.success) {
+				setUpdateResult({ added: data.added, total: data.total });
+			} else {
+				setUpdateResult({ error: data.error || "Unknown error" });
+			}
+		} catch (e) {
+			setUpdateResult({ error: e instanceof Error ? e.message : "Network error" });
+		} finally {
+			setIsUpdating(false);
+		}
+	};
 
 	if (!isOpen) return null;
 
@@ -44,11 +70,29 @@ export default function ProfileCard({ isOpen, onClose }: Props) {
 					</p>
 
 					<p className={styles.devCredit}>
-						Developed by Khadichabegim Naymanova
+						Developed by Ahmed Arsalan Rukhsar
 					</p>
 					<p className={styles.devRole}>
 						Frontend Developer · React · TypeScript · WebGL
 					</p>
+
+					<div className={styles.updateSection}>
+						<button
+							type="button"
+							className={styles.updateBtn}
+							onClick={handleUpdate}
+							disabled={isUpdating}
+						>
+							{isUpdating ? "Updating Database..." : "Update Local Database"}
+						</button>
+						{updateResult && (
+							<p className={updateResult.error ? styles.errorMsg : styles.successMsg}>
+								{updateResult.error
+									? `Update Failed: ${updateResult.error}`
+									: `Success! Added ${updateResult.added} new records. Refresh to see changes.`}
+							</p>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>

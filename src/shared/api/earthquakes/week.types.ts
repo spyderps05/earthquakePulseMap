@@ -4,6 +4,7 @@ export type WeekEarthquakeEvent = {
 	depth: number;
 	mag: number;
 	time: number;
+	place: string;
 };
 
 export type EarthquakeStats = {

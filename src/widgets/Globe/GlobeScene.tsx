@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ErrorToast from "@/shared/ui/ErrorToast";
 import LoadingOverlay from "@/shared/ui/LoadingOverlay";
 import { TimeProvider, useTime } from "@/shared/context/TimeContext";
@@ -8,12 +8,13 @@ import FilterPanel from "@/widgets/FilterPanel/FilterPanel";
 import OnboardingOverlay from "@/widgets/OnboardingOverlay/OnboardingOverlay";
 import TimelineChartAm from "@/widgets/TimelineChart/TimelineChartAm";
 import MobileTimeline from "@/widgets/TimelineChart/MobileTimeline";
-import DateCard from "../DateCard/DateCard";
 import InfoPanels from "../InfoPanels/InfoPanels";
 import ProfileCard from "../ProfileCard/ProfileCard";
+import EarthquakeTooltip from "./EarthquakeTooltip";
 import GlobeContent from "./GlobeContent";
 import styles from "./GlobeScene.module.scss";
 import GlobeControls from "./ui/GlobeControls";
+import type { EarthquakeMetaItem } from "./earthquakes/types";
 
 export default function GlobeScene() {
 	return (
@@ -36,6 +37,13 @@ function GlobeSceneInner() {
 	const [isDataLoading, setIsDataLoading] = useState(true);
 
 	const { mode, setMode } = useTime();
+
+	// Tooltip state
+	const [tooltipItem, setTooltipItem] = useState<EarthquakeMetaItem | null>(null);
+	const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+	// Zoom target ref — will be read by GlobeContent
+	const zoomTargetRef = useRef<{ lat: number; lon: number } | null>(null);
 
 	useEffect(() => {
 		const media = window.matchMedia("(max-width: 767px)");
@@ -76,14 +84,36 @@ function GlobeSceneInner() {
 		window.location.reload();
 	}, []);
 
+	const handleHover = useCallback(
+		(item: EarthquakeMetaItem | null, screenX: number, screenY: number) => {
+			setTooltipItem(item);
+			setTooltipPos({ x: screenX, y: screenY });
+		},
+		[],
+	);
+
+	const handleClick = useCallback((item: EarthquakeMetaItem) => {
+		zoomTargetRef.current = { lat: item.lat, lon: item.lon };
+	}, []);
+
 	return (
 		<div className={styles.canvasWrapper} role="application" aria-label="GIMU-EarthQuake Watch 3D Globe">
 			{isDataLoading && <LoadingOverlay />}
 			<OnboardingOverlay />
 
 			<Canvas frameloop="demand" camera={{ position: [0, 0, 4], fov: 30 }}>
-				<GlobeContent />
+				<GlobeContent
+					onHover={handleHover}
+					onClick={handleClick}
+					zoomTargetRef={zoomTargetRef}
+				/>
 			</Canvas>
+
+			<EarthquakeTooltip
+				item={tooltipItem}
+				screenX={tooltipPos.x}
+				screenY={tooltipPos.y}
+			/>
 
 			<BrandHeader />
 

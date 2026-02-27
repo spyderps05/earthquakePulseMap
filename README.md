@@ -69,5 +69,5 @@ Historical data is preprocessed into compact binary assets:
 
 ## Credits
 
-Developed by **Khadichabegim Naymanova**
+Developed by **Ahmed Arsalan Rukhsar**
 Frontend Developer · React · TypeScript · WebGL

@@ -35,6 +35,9 @@ export default function TimelineChartAm() {
 
 	const progressRef = useRef(0);
 	const isAllModeRef = useRef(isAllMode);
+	const hasMountedRef = useRef(false);
+
+	if (bins.length > 0) hasMountedRef.current = true;
 
 	useEffect(() => {
 		isAllModeRef.current = isAllMode;
@@ -202,10 +205,9 @@ export default function TimelineChartAm() {
 			d2.dispose();
 			root.dispose();
 		};
-	}, [bins, mode]);
+	}, [bins, mode, isAllMode]);
 
-	if (bins.length === 0) return null;
-
+	const chartReady = bins.length > 0;
 	const chartH = 130;
 
 	const magLegend =
@@ -213,8 +215,11 @@ export default function TimelineChartAm() {
 	const depthLegend = "Depth (km) (0 - 700)";
 	const periodLabel = mode === "week" ? "per day" : "per month";
 
+	if (!hasMountedRef.current) return null;
+
 	return (
-		<div className={styles.wrap} aria-label="Seismic activity timeline chart" role="img">
+		<div className={styles.wrap} aria-label="Seismic activity timeline chart" role="img"
+			style={{ opacity: chartReady ? 1 : 0.3, transition: 'opacity 0.4s ease' }}>
 			<div className={styles.aggregationHint}>
 				<span className={styles.metricPill}>M max ({periodLabel})</span>
 				<span className={styles.metricPill}>Depth avg ({periodLabel})</span>

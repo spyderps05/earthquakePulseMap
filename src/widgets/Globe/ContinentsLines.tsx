@@ -5,7 +5,7 @@ export default function ContinentsLines() {
 	const [data, setData] = useState<Float32Array | null>(null);
 
 	useEffect(() => {
-		fetch("/data/coastline.bin")
+		fetch("/data/coastline.data")
 			.then((res) => res.arrayBuffer())
 			.then((buffer) => {
 				setData(new Float32Array(buffer));

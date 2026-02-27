@@ -10,7 +10,7 @@ const inputPath = path.join(
 	"../public/data/earthquakes-1900-2026.json",
 );
 
-const outputBinPath = path.join(__dirname, "../public/data/earthquakes.bin");
+const outputBinPath = path.join(__dirname, "../public/data/earthquakes.data");
 
 const outputStatsPath = path.join(
 	__dirname,
